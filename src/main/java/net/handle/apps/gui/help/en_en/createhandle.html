@@ -1,0 +1,180 @@
+<HTML>
+<HEAD>
+  <TITLE>Handle.net Administration Tools Help--create handle</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Create Handle Help</H1>
+
+<P>
+  Only authenticated users can create handles. Every handle MUST have 
+at least one administrator. Every handle has a
+handle name and a group of handle values. Every handle value has an 
+index, type, data, TTL (time to live), timestamp, permission set 
+and references.
+</p>   
+ 
+<P>To create a handle:</P>
+<OL>
+  <LI><A NAME="HANDLENAME"></A>
+      <B>Input new handle name (Prefix/LocalName)</B>
+      <P>
+       Type a new handle in the 'Handle' text box.  Press 
+       'Return'. This will check the authentication information.  If you 
+       have not authenticated yet, an authentication box will pop up.  To change the 
+       authentication information between handle creations, select 'Setup' 
+       from the main Handle Amin Tool menu, then click <A HREF="authen.html">
+       'Authentication'</A>.
+      </P> 
+  <P>
+  <LI><A NAME="ADDVALUE"></A>
+      <B>Add Handle Data</B>
+      <P>
+       The 'Add Handle Data' box contains shortcut buttons for quick 
+       addition of certain handle types with defaults already set. 
+       The 'Add Custom' box is used to add handle values with custom
+       types. Every handle value must have an index to identify it in the 
+       handle value group.
+      </P>
+
+      <UL>
+          <LI><A NAME="HS_ADMIN"></A>
+	    <B>Add Admin</B>:  
+            used to create an administrator (HS_ADMIN value) for the new handle. 
+            Every handle MUST have at least one administrator. Every administrator
+            value is made up of a handle and handle value index. The 'Admin ID Index' 
+	    can be any unique number within the handle data for the handle
+            being created. The 'Admin ID Handle' and 'Admin ID Index' identify either: 
+	    <UL>
+              <LI>A public key or secret key that an administrator must authenticate 
+                  against.
+              <LI>An admin group that references (possibly indirectly through multiple
+                  admin groups) a handle value with either a public key or secret key 
+                  that an administrator must authenticate against. 
+	    </UL>
+            <P>
+	    Be sure to check the appropriate permissions for the administrator handle.
+	    Click the 'More' button to view or modify the type, TTL, timestamp, 
+            permissioms, and references related to this handle value.
+	    </P><P>
+
+	  <LI><A NAME="URL"></A>
+	    <B>Add URL</B>:   
+            used for the creation of a handle value of type URL.
+	    Click the 'More' button to view or modify the type, TTL, timestamp, 
+	    permissions, and references related to this handle value.
+	    <P>
+
+          <LI><A NAME="EMAIL"></A>
+	    <B>Add Email</B>:
+	    used for the creation of an email address for the new handle.
+	    Click the 'More' button to view or modify the type, TTL, timestamp, 
+	    permissions, and references related to this handle value.
+	    <P>
+
+	  <LI><A NAME="CUSTOM"></A>
+	    <B>Add Custom Data</B>:
+	    used to create additional data values not shown on the 'Create Handle'
+            window and for the customization of permissions and TTL values.
+  	    <P> 	
+            Select the type (<EM><A HREF="#HS_ADMIN">HS_ADMIN</A>, 
+	    <A HREF="#HS_SITE">HS_SITE</A>,
+	    <A HREF="#HS_ALIAS">HS_ALIAS</A>, 
+            <A HREF="#HS_VLIST">HS_VLIST</A>,
+	    <A HREF="#HS_SECKEY">HS_SECKEY</A>,
+	    <A HREF="#HS_PUBKEY">HS_PUBKEY</A>,
+	    <A HREF="#HS_SERV">HS_SERV</A>,
+	    <A HREF="#EMAIL">EMAIL</A>,
+	    <A HREF="#URL">URL</A></EM>) 
+	    in the 'Type' box or input a new one.
+	    </P><P><P>
+
+            The 'Value Data' button inputs the data corresponding to the type.
+            </P><P><P>
+
+            <A NAME="HS_SITE"></A>
+	      <B>HS_SITE</B> type data is used to add the site information 
+              for prefix handles to indicate where handles 
+              with that prefix are resolved.
+              The data value must have an index value which can be 
+              any unique number within the handle record data.
+              The data version, protocol and serial number are values 
+              that have to do with the current Handle.net software version.
+              Check whether the site is primary and if multiple sites are primary.
+              Choose whether the handle will be hashed by the entire 
+              handle, just the prefix, or a local name.
+              Add the IP addresses of the servers that exist in the site.
+              Add attribute value pairs.
+	    </P><P><P>
+
+	    <A NAME="HS_ALIAS"></A>
+	      <B>HS_ALIAS</B> type data is used to add a handle alias as a handle value.
+	    </P><P><P>
+
+	    <A NAME="HS_VLIST"></A>
+	      <B>HS_VLIST</B> type data is used to define administrator groups
+	      with a list of other handle values. 
+	    </P><P><P>
+
+	    <A NAME="HS_SECKEY"></A>
+	      <B>HS_SECKEY</B> type data is used to add a secret key as a handle value.
+	      Generally, you should check the 'public read permission' off.
+	    </P><P><P>
+
+	    <A NAME="HS_PUBKEY"></A>
+	      <B>HS_PUBKEY</B> type data is used to add a public key as a handle value. 
+              Generate key pairs (private key, public key) using the 'Generate 
+              Key Pair' button.  Load a public key from the file system using 
+              the 'Load Key' button then add the public key to the key field. 
+	      Click the 'Clear' button to clear the key field.  Click the 'Ok'
+              button to confirm. 
+	    </P><P><P> 
+	    
+	    <A NAME="HS_SERV"></A>
+	      <B>HS_SERV</B> type data is a handle value which has the site
+	      information.
+	    </P>
+
+        </UL>
+   
+  <LI><B>Handle Data View</B>
+      <P>
+      This box displays the handle data values being added.
+      </P>
+      <UL>
+        <LI><A NAME="MODIFYVALUE"></A>
+	    <B>Modify</B> button:  allows you to change attributes associated with
+               the selected handle value.<BR>
+        <LI><A NAME="REMOVEVALUE"></A>
+	    <B>Remove</B> button:  allows you to remove the selected handle value.<BR>
+        <LI><A NAME="VIEWVALUE"></A>
+            <B>View</B> button:  allows you to view the selected handle value.<BR>
+        <LI><A NAME="CLEARVALUE"></A>
+            <B>Clear All</B> button:  allows you to remove all handle values.
+      </UL>
+	</P>
+  <LI><B>Save and Load</B>
+      	
+      <UL>
+      <LI><B>Save</B> button:  allows you to save the handle values to a file.<BR>
+      <LI><B>Load</B> button:  allows you to load the handle values from a file, 
+        and append those values to the current handle value group or reset them
+        as the current handle value group.
+      </UL>  
+	</P>
+  <LI><A NAME="SUBMITCREATE"></A><B>Submit the handle for creation</B>
+      <p>
+       Press the 'Create' button after the addition of all the handle 
+       values is complete.  This will respond with an indication of success 
+       or failure.  The absence of an administrator and a handle name is considered
+       a failure.
+      </P>
+</OL>
+
+<BR><BR>
+<A HREF="intro.html">Home</A>
+<BR><HR><BR>
+<i>hdladmin@cnri.reston.va.us</i>
+
+</BODY>
+</HTML>

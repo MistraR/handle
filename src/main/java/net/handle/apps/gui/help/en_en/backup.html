@@ -1,0 +1,63 @@
+<html>
+  <head>
+    <title>Handle.net Administration Tools Help--checkpoint and recovery</title>
+  </head>
+  
+  <body>
+    <h1>Checkpoint and Recovery Help </h1>
+
+<p>
+NOTE: This method of server backup is deprecated.  We currently recommend 
+the use of the BDBJE handle storage, which allows direct copying of files 
+during operation.  For more information
+contact hdladmin@cnri.reston.va.us.
+</p>
+
+<p>
+The Backup Server function of the admin tool sends a request to a server
+to checkpoint its internal handle database.  In order to be able to checkpoint
+a server, the administrator must be identified as an administrator for that 
+server (in the backup_admins section of the config.dct file on the server).
+</p><p>
+The checkpoint operation consists of several steps.  Upon receiving an
+authenticated request to backup the database, the server will
+<ol>
+ <li> Copy the main database files (handles.jdb and nas.jdb) to backup
+    files (handles.bak and nas.bak)
+ <li> Reset the transaction log (dbtxns.log)
+</ol>
+</p><p>
+
+After these steps the handles.bak and nas.bak files can be safely
+copied to another location for a backup.  The dbtxns.log file will contain
+all of the changes made to the database since the handles.bak and
+nas.bak files were made.  The dbtxns.log file will allow you to restore 
+the backup up to the last transaction that was successfully 
+performed if something were to go wrong with the main database.
+</p><p>
+
+To perform the checkpointing, enter the IP address and port number of the server
+that you want to perform the checkpoint operation.  <font color=red>Note:</font>
+During the checkpoint process, the server will reject all requests to create, modify,
+or delete handles.  For this reason, it is usually preferable to perform the 
+checkpoint operation when there is little administrative activity on the server.
+Checkpoint operations should only be performed on primary servers since secondary
+servers do not keep transaction logs for their databases.
+</p><p>
+
+To recover the database using the backup files and transaction log you can perform
+the following steps:
+<ol>
+ <li> Make sure that the server is NOT running.
+ <li> Make extra copies of all files (doesn't hurt to be safe!)
+ <li> Run the command: <pre>java -cp handle.jar net.handle.apps.tools.RecoverJDB  &lt;server_dir&gt;</pre>
+ <li> Restart the server.  The server should now have its database restored to it's pre-disaster
+      state.
+</ol>
+</p>
+    <a href="intro.html">Home</a>
+    <br><hr><br>
+    <i>hdladmin@cnri.reston.va.us</i>
+  </body>
+</html>
+

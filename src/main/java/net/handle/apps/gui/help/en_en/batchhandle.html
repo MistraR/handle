@@ -1,0 +1,410 @@
+<html>
+  <head>
+    <title>Batch Submission</title>
+  </head>
+  <body>
+    
+    <h1>Batch Submission</h1>
+    Only authenticated users can submit batch files. Batch files need to follow
+    the batch file format. Every batch file can include more than one kind
+    of handle operation (CREATE/DELETE/ADD/REMOVE/MODIFY/HOME/UNHOME). Users can 
+    authenticate themselves either through the batch files or through the GUI tools.
+    <ul>
+      <li><a href="#CBATCH">Batch File Formats</a>
+    <ul>
+      <li><a href="#CREATE">Create Handle Batch format</a>
+      <li><a href="#DELETE">Delete Handle Batch format</a>
+      <li><a href="#HOMENA">Home/UnHome Prefix Handle Batch format</a>
+      <li><a href="#ADD">Add Handle Value Batch format</a>
+      <li><a href="#REMOVE">Remove Handle Value Batch format</a>
+      <li><a href="#MODIFY">Modify Handle Value Batch format</a>
+      <li><a href="#AUTH">Authentication Information format</a>
+      <li><a href="#SESSIONSETUP">Session Setup Information format</a>
+      <li><a href="#VALUE">Handle Value Line format</a>
+    </ul>
+      <li><a href="#LOAD">Load Batch file</a>
+      <li><a href="#AUTHEN">Authenticate</a>
+      <li><a href="#SUBMIT">Submit Batch</a>
+      <li><a href="#LOG">Log files</a>
+    </ul>
+    
+    <P>To submit a batch:</P>
+    
+    <ol>
+      <li><a NAME="CBATCH"></a><b>Batch File Formats</b>
+	<p>
+	  Users need to create a batch file before using the batch submission
+	  tool. All batch files are plain text format. One batch file could have
+	  more than one handle operation. The handle operations are: 
+	  <a href="#CREATE">Create Handle</a>, 
+	  <a href="#DELETE">Delete Handle</a>, 
+	  <a href="#HOMENA">Home/UnHome Prefix Handles</a>,  
+	  <a href="#ADD">Add Handle Values</a>, 
+	  <a href="#REMOVE">Remove Handle Values</a>, 
+	  <a href="#MODIFY">Modify Handle Values</a>, 
+	  <a href="#AUTH">Authenticate User</a>,
+	  <a href="#SESSIONSETUP">Setup Session</a>. 
+
+          <br>If you need to change authentication for subsequent batch operations,
+	  the new authentication information should be put before the batch block.
+	  If you authenticate during the batch submission, then you need not include
+	  the authentication information in the batch file. 
+	</p>
+	<ul>
+	  <li><a NAME="CREATE"></a><b>Create Handle Batch Format</b>
+	    <p>
+	      Operation name is 'CREATE'. 
+              <br>The first line is composed of the following:
+	      <br><b>CREATE + space + handle_name</b>
+
+	      <br><br>The next lines are handle value lines. There must
+	      be a handle value line to define the administrator of the handle. 
+              <br>End the CREATE handle operation with a blank line.
+
+	      <br><br>The list of pre-defined handle value types is as follows: 
+              <b>HS_ADMIN, HS_VLIST, HS_SECKEY, HS_PUBKEY, HS_SITE, HS_SERV, 
+              HS_ALIAS, EMAIL, URL</b>. Each handle value line must start 
+              with a unique index number, followed by the handle value type
+	      from the list above, ttl (the time to live in seconds), the permission
+	      set (admin_read, admin_write, public_read, public_write), and the value data.
+	      See the <a href="#VALUE">'Handle Value Line Format'</a> section below for
+	      more detail.
+
+<pre>Example:
+  CREATE TEST/ts1
+  100 HS_ADMIN 86400 1110 ADMIN 300:111111111111:TEST/ts1
+  300 HS_SECKEY 86400 1100 UTF8 my_password
+  1 URL 86400 1110 UTF8 http://www.handle.net
+		
+  CREATE 0.NA/TEST.ts1
+  100 HS_ADMIN 86400 1110 ADMIN 300:111111111111:0.NA/TEST.ts1
+  300 HS_PUBKEY 86400 1110 FILE c:\somewhere\pubkey.bin
+  101 HS_ADMIN 86400 1110 ADMIN 301:111111111111:0.NA/TEST.ts1
+  301 HS_SECKEY 86400 1110 FILE my_password
+  1 HS_SERV 86400 1110 UTF8 0.NA/TEST
+  3 URL 86400 1110 UTF8 http://www.cnn.com
+  4 EMAIL 86400 1110 UTF8 hdladmin@cnri.reston.va.us
+</pre>
+<p>	    
+	  <li><a NAME="DELETE"></a><b>Delete Handle Batch Format</b>
+	    <p>
+	      Operation name is 'DELETE'. This operation deletes an existing 
+              handle completely.
+	      <br>Every line should resemble the following:
+	      <br><b>DELETE + space + handle_name</b>
+
+<pre>Example:
+  DELETE TEST/ts1
+  DELETE 0.NA/TEST.ts1
+</pre>
+<p>
+	  <li><a NAME="HOMENA"></a><b>Home/UnHome Prefix Handle Batch Format</b>
+	    <p>
+	      Operation name is 'HOME' or 'UNHOME'. This operation associates 
+	      server information with a specified prefix. It only 
+              works on existing prefix handles and active handle 
+              servers. It tells the server which prefix handles will
+              be homed or unhomed to it. 
+              <br>The first line provides the service information:
+	      <br><b>HOME/UNHOME + space + server_ip:server_port:communicate_protocol(tcp,udp,http)</b>
+	      <br><br>The next lines provide the prefix handles 
+              which will be homed/unhomed at this server.
+<pre>Example:
+  HOME 10.27.10.28:2641:TCP
+  0.NA/TEST1
+  0.NA/TEST1.t1
+
+  UNHOME 10.27.10.28:2641:TCP
+  0.NA/TEST1
+  0.NA/TEST1.t1
+</pre>
+<p>	    
+	  <li><a NAME="ADD"></a><b>Add Handle Value Batch Format</b>
+	    <p>
+	      Operation name is 'ADD'. This operation adds new handle values to 
+              an existing handle.
+	      <br>The first line is composed of the following:
+	      <br><b>ADD + space + handle_name</b>
+
+              <br><br>The next lines are handle value lines. There must
+	      be a handle value line to define the administrator of the handle. 
+              <br>End the CREATE handle operation with a blank line.
+
+	      <br><br>The list of pre-defined handle value types is as follows: 
+              <b>HS_ADMIN, HS_VLIST, HS_SECKEY, HS_PUBKEY, HS_SITE, HS_SERV, 
+              HS_ALIAS, EMAIL, URL</b>. Each handle value
+	      line must start with a unique index number, followed by the handle value type
+	      from the list above, ttl (the time to live in seconds), the permission
+	      set (admin_read, admin_write, public_read, public_write), and the value data.
+	      See the <a href="#VALUE">'Handle Value Line Format'</a> section below for
+	      more detail.
+<pre>Example:
+  ADD TEST/ts1
+  5 URL 86400 1110 UTF8 http://www.handle.net/admin.html
+  6 EMAIL 86400 1110 UTF8 hdladmin@cnri.reston.va.us
+
+  ADD TEST/ts2
+  5 URL 86400 1110 UTF8 http://www.cnn.com/entertainment.html
+  6 URL 86400 1110 UTF8 http://www.cnn.com/show.html
+  7 EMAIL 8600 1110 UTF8 hdladmin@cnri.reston.va.us
+</pre>
+<p>	    
+	  <li><a NAME="REMOVE"></a><b>Remove Handle Value Batch Format</b>
+	    <p>
+	      Operation name is 'REMOVE'. This operation removes one or more handle 
+	      values from an existing handle. 
+              <br>Every line should resemble the following:
+	      <br><b>REMOVE + space + indexes:handle_name</b>
+	      <br>Each index is separated by <b>','</b>.
+<pre>Example:
+  REMOVE 5:TEST/ts1
+  REMOVE 5,6,7:TEST/ts5
+</pre>
+<p> 
+	  <li><a NAME="MODIFY"></a><b>Modify Handle Value Batch Format</b>
+	    <p>
+	      Operation name is 'MODIFY'. This operation changes one or more handle values
+	      for an existing handle. 
+              <br>The first line is composed of the following:
+	      <br><b>MODIFY + space + handle_name</b>
+
+              <br><br>The next lines are handle value lines. There must
+	      be a handle value line to define the administrator of the handle. 
+              <br>End the MODIFY handle operation with a blank line.
+
+	      <br><br>The list of pre-defined handle value types is as follows: 
+              <b>HS_ADMIN, HS_VLIST, HS_SECKEY, HS_PUBKEY, HS_SITE, HS_SERV, 
+              HS_ALIAS, EMAIL, URL</b>. Each handle value
+	      line must start with a unique index number, followed by the handle value type
+	      from the list above, ttl (the time to live in seconds), the permission
+	      set (admin_read, admin_write, public_read, public_write), and the value data.
+	      See the <a href="#VALUE">'Handle Value Line Format'</a> section below for
+	      more detail.
+<pre>Example:
+  MODIFY TEST/ts1
+  2 URL 86400 1110 UTF8 http://www.handle.net/newadmin.html
+  3 EMAIL 86400 1110 UTF8 hdladmin@cnri.reston.va.us
+		
+  MODIFY TEST/ts2
+  2 URL 86400 1110 UTF8 http://www.cnn.com/entertainment.html
+  3 URL 86400 1100 UTF8 http://www.cnn.com/newshow.html
+</pre>
+<p>
+	  <li><a NAME="AUTH"></a><b>Authentication Information Format</b>
+	    <p>
+	      Operation name is 'AUTHENTICATE'.	      
+	      <ul>
+	      <li>For secret key authentication: 
+              <br>First line:  <b>AUTHENTICATE + space + SECKEY:admin_index:admin_handle</b>
+	      <br>Second line: <b>password</b>
+<pre>Example:
+  AUTHENTICATE SECKEY:301:0.NA/TEST.ts1
+  my_password
+</pre><p>
+	      <li>For private key authentication:
+              <br>First line: <b>AUTHENTICATE PUBKEY:admin_index:admin_handle</b>
+              <br>Second line: <b>private_key_file_path + '|' + passphrase</b> (If your private key was created and encrypted by passphrase) 
+              <br>Second line: <b>private_key_file_path</b> (If your private key was NOT created and encrypted by passphrase)
+<pre>Example:
+  AUTHENTICATE PUBKEY:300:0.NA/TEST.ts1
+  c:\home\keyfile|my_pass_phrase
+
+  AUTHENTICATE PUBKEY:300:0.NA/TEST.ts1
+  c:\home\keyfile
+</pre>
+              </ul><p>
+
+	  <li><a NAME="SESSIONSETUP"></a><b>Session Setup Information Format</b>
+	  <p>
+	    Operation name is 'SESSIONSETUP'. Specify mandatory &quot;USESESSION&quot;
+            flag.  Specify optional RSA public key pair information, session 
+            attributes such as &quot;Encrypted&quot;, &quot;Authenticated&quot;, 
+            and &quot;If session fails, use challenge response&quot; flags, and 
+            &quot;TIMEOUT&quot;.&nbsp;
+
+	<br>The first line is composed of the following:
+        <br><b>SESSIONSETUP</b>
+
+        <br><br>
+          Use the following lines to specify mandatory and optional session setup data:
+        <p><b>USESESSION:&lt;session_on_or_off_flag&gt;&nbsp;&nbsp;</b><br>
+        <b>PUBEXNGKEYFILE:rsa_public_exchange_key_file</b><br>
+        <b>PUBEXNGKEYREF:rsa_public_exchange_key_reference_index:rsa_public_exchange_key_reference_handle</b><br>
+        <b>PRIVEXNGKEYFILE:rsa_private_exchange_key_file</b><br>
+        <b>PASSPHRASE:pass_phrase_to_decode_the_private_exchange_key</b><br>
+        <b>OPTIONS:&lt;encrypt session flag&gt;&lt;authenticate session
+        flag&gt;&lt;if session fails, use challenge response model flag&gt;</b><br>
+        <b>TIMEOUT:time_out_in_hours</b>
+
+        <br><br>
+          End the SESSIONSETUP operation with a blank line.
+
+        <br><br>In the above lines, the &quot;USESESSION:&quot; flag is mandatory. 
+        Either &quot;PUBEXNGKEYFILE:&quot; or &quot;PUBEXNGKEYREF:&quot;, and 
+        &quot;PRIVEXNGKEYFILE&quot;, &quot;OPTIONS:&quot;, &quot;TIMEOUT:&quot; 
+        are optional. &quot;PASSPHRASE:&quot; is conditional.&nbsp;
+
+        <br><br>If &quot;OPTIONS:&quot; is omitted, session messages will NOT be 
+        &quot;encrypted&quot;, and NOT &quot;authenticated&quot;&nbsp;; however, 
+        the &quot;if session fails, use challenge response model&quot; flag will 
+        be set to make sure requests carried through without session.
+
+        <br><br>The &quot;SESSIONSETUP&quot; line must come first. The remaining lines
+        can be in any order. Do not include a blank line until it ends.
+
+<pre>Example 1: use public exchange key from server.
+
+  SESSIONSETUP 
+  USESESSION:1
+
+Example 2: use public exchange key from a file (client provides RSA exchange keys).
+
+  SESSIONSETUP 
+  USESESSION:1 
+  PUBEXNGKEYFILE:c:\hs\bin\RSAPubKey.bin
+  PRIVEXNGKEYFILE:c:\hs\bin\RSAPrivKey.bin 
+  PASSPHRASE:secret
+  OPTIONS:111 
+  TIMEOUT:24
+
+Example 3: use public exchange key from a handle value reference (client provides exchange keys).
+
+  SESSIONSETUP 
+  USESESSION:1 
+  PUBEXNGKEYREF:300:0.NA/TEST.ts1
+  PRIVEXNGKEYFILE:c:\hs\bin\RSAPrivKey.bin
+</pre>
+
+        <p>Please see the <a href="sessionsetup.html">Session Setup</a> panel for related
+        information.</p>
+
+	</ul>
+	
+	<ul>
+
+	  <li><a NAME="VALUE"></a><b>Handle Value Line Format</b>
+	    <p>
+	      Each handle value line is composed of :
+	      <br><b>value_index + space + value_type + space + ttl + 
+		space + permission_set + space + value_data</b>
+	      <br><br>The value_index is a unique integer within the specific handle.
+	      
+	      <br><br>The value_types are: <b>HS_ADMIN, HS_SECKEY, EMAIL, 
+		URL, HS_PUBKEY, HS_SERV, HS_VLIST, HS_ALIAS.</b>
+	     
+	      <br><br>ttl: handle's time to live in cache counted by seconds. 
+                Default is 86400(24 hours).
+	      
+	     <br><br>Permission_set: permission values indicated by 4 characters, '1' is
+	      true, '0' is false, order is: admin_read, admin_write, public_read, 
+              public_write.
+	      
+	     <br><br>Value_data:
+              <ul>
+	      <li>If the handle value data defines an Administrator, its data format is:
+                <br><b>ADMIN + space + admin_index:admin_permission_set + admin_handle</b>
+                <br>The admin permission set is twelve characters with the following order:
+                add_handle, delete_handle, add_derived_prefix, delete_derived_prefix, 
+                modify_values, remove_values, add_values, read_values, modify_administrator,                remove_administrator, add_administrator and list_handles.
+	      
+              <li>If the handle value type is one of HS_SECKEY, HS_SERV, HS_ALIAS, 
+                  EMAIL, and URL its data will be a string. The 
+                  value_data format is:
+                <br><b>UTF8 + space + string_content</b>
+	      
+              <li>If the handle value data is a local file, its data format is:
+	      <br><b>FILE + space + file_path</b>
+	      
+              <li>If the handle value data is a value reference list, its data 
+                  format is:
+	      <br><b>LIST + space + index1:handle1;index2:handle2;</b>
+            </ul>
+<pre><b>Examples:</b>
+  <em>Handle value data is an administration record:</em>
+    100 HS_ADMIN 86400 1110 ADMIN 300:110011111111:0.NA/TEST.ts1
+   Explanation:
+    100 is index;
+    HS_ADMIN is type;
+    86400 is the time to live in cache in seconds;
+    1110 is the value permissions which allow admin write, admin read, public read;
+    ADMIN indicates that this value data is an administrator record;
+    300 is the administrator handle index;
+    110011111111 defines the administration permissions (add_handle, delete_handle, 
+        no add_derived_prefix, no delete_derived_prefix, 
+        modify_values, remove_values, add_values, read_values, 
+        modify_administrator, remove_administrator, add_administrator, list_handles);
+    0.NA/TEST is the administrator handle name;
+
+  <em>Handle value data is string:</em>
+    2 URL 86400 1110 UTF8 http://www.handle.net/
+	
+  <em>Handle value data comes from a local file:</em>
+    300 HS_PUBKEY 86400 1110 FILE c:\somewhere\pubkey.bin
+    2 HS_SITE 86400 1110 FILE c:\somewhere\siteinfo.bin
+
+  <em>Handle value data is handle value reference list:</em>
+    1 HS_VLIST 86400 1110 LIST 300:100.ADMIN/USER1; 300:100.ADMIN/USER2;
+-------------------------------------------------------------------------------------
+
+<em>Example of all the handle value types:</em> 
+  100 HS_ADMIN 86400 1110 ADMIN 300:111111111111:0.NA/TEST
+  1 HS_SITE 86400 1110 FILE c:\somewhere\siteinfo.bin
+  2 HS_SERV 86400 1110 UTF8 0.NA/TEST		
+  300 HS_PUBKEY 86400 1110 FILE c:\somewhere\publickey.bin  
+  301 HS_SECKEY 86400 1100 UTF8 my password  
+  400 HS_VLIST 86400 1110 LIST 300:10.ADMIN/USER1; 300:10.ADMIN/USER2;
+  7 EMAIL 86400 1110 UTF8 hdladmin@cnri.reston.va.us
+  8 URL 86400 1110 UTF8 http://www.handle.net
+</pre>
+	</ul>
+	
+      <li><a NAME="LOAD"></a><b>Load Batch file</b>
+	<p>
+	  Click the 'Add' button to enter the batch file path. This will be 
+          added to the batch file list window. 
+          Click the 'Modify' button to change the selected file's path.
+          Click the 'Remove' button to delete the selected file's path from the list.
+          Click the 'View' button to view the selected batch file's path fully
+          without editing.
+          Click the 'Clear All' button to delete all files from the list.
+	</p><P>
+        
+      <li><a NAME="AUTHEN"></a><b>Authenticate</b>
+	<p>
+	  There are 2 ways to authenticate:
+          <UL>
+          <LI> Select 'Setup' from the main Handle Admin Tool menu, then 
+            click <A HREF="authen.html">'Authentication'</A>.
+          <LI> Include authentication information in the batch file as shown 
+            in the <a href="#AUTH">'Authentication Information Format'</a> section above.
+          </UL>
+        </p>
+	
+      <li><a NAME="LOG"></a><b>Batch Submission Log</b>
+	<p>
+	  There will be output from the batch submission. Select the corresponding
+          radio button to output the log information to a specified file,
+          to stdout, or to the log window. If you chose to output the log to a file,
+          enter the log file path.<br>
+
+          There are three types of log messages: 
+	  <UL>
+	  <LI>'SUCCESS' means the operation completed successfully.
+          <LI>'FAILURE' means the operation failed.
+          <LI>'INVALID' means the format of the operation was invalid.
+	  </UL>
+
+      <li><a NAME="SUBMIT"></a><b>Submit Batch</b>
+        <p>
+          Click the 'Submit Batch' button to submit the batch operation.
+          If you want to interrupt the batch submission process, click the 'Stop 
+          Batch' button.
+        </p>
+    </ol>
+
+    <br><a href="intro.html">Home</a>
+    <br><hr>
+    <br><i>hdladmin@cnri.reston.va.us</i>
+    
+  </body>
+</html>

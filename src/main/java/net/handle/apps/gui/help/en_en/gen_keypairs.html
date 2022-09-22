@@ -1,0 +1,45 @@
+<HTML>
+<HEAD>
+  <TITLE>Handle.net Administration Tools Help--generate key pairs</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Generate Key Pairs</H1>
+
+<P>
+The Handle protocol provides two forms of authentication, public key
+and secret key.  This window will enable the generation of a public
+key pair.  This requires two keys: a public key and a private key.
+Public key generation uses the DSA or RSA algorithm.
+<BR>
+The public key is stored in a handle.  It may be publicly readable as
+it cannot be compromised without the private key.  The private key should
+be stored on the computer with the handle client that will be authenticated.
+To prevent unauthorized use of a private key it can be encrypted using
+a symmetric algorithm.  
+
+<P>To generate key pairs:</P>
+<OL>
+  <LI> Select 'Setup' from the main Handle Administration Tool menu.<BR>
+  <LI> Select 'Generate Key Pairs'.<BR>
+  <LI> Enter the paths of the private and public key files in the
+       corresponding text fields or use the 'Browse' button to find
+       the files.<BR>
+  <LI> Select the Algorithm to be used.<BR>
+  <LI> Enter the Strength of the key pair to be generated.  The default is 
+       1024 bits.  The longer the length, the stronger the key pairs.<BR>
+  <LI> Select 'Encrypt' or 'Nocrypt' of the private key.  Encryption
+       of the private key requires that you choose a secret passphrase
+       that will need to be entered whenever authenticating using this
+       key pair.<BR>
+  <LI> Click 'GenKeys'.<BR>
+  <LI> If 'Encrypt' was selected, a window will prompt you to enter 
+       your secret passphrase.<BR>
+  <LI> A message will confirm the generation of the keys.  Click 'Close'
+       to exit the 'Generate Key Pair' window.<BR>
+</OL>
+
+<BR><HR>
+<A HREF="intro.html">Home</A>
+</BODY>
+</HTML>

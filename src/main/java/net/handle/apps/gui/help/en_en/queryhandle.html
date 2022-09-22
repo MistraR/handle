@@ -1,0 +1,93 @@
+<HTML>
+<HEAD>
+  <TITLE>Handle.net Administration Tools Help-- query handle</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Query Handle Help</H1>
+
+<P>
+  Only authenticated users can query restricted handle values (non public read).
+  Other users can query public read handle values. 
+  Users can query specific types of handle values or specific index
+  handle values.
+</p>   
+ 
+<P>To query:</P>
+
+<OL>
+  <LI><A NAME="HANDLENAME"></A>
+      <B>Input handle name (Prefix/LocalName)</B>
+      <P>
+        Type a handle in the 'Handle Name' text box.
+      </P>
+  <P>
+  <LI><A NAME="QUERYINDEX"></A>
+      <B>Input query indices</B> 
+      <P>
+      Type the indices of the handle values which you want to query
+      in the 'Handle Index' text field. Use commas to separate 
+      multiple index values.
+      </P>	
+  <P> 
+  <LI><A NAME="QUERYTYPE"></A>
+      <B>Input query types</B> 
+      <P>
+       Users can select one, more or all handle value types to query
+       by highlighting the types in the 'Handle Type' field. 
+      </P>
+  <P>
+  <LI><A NAME="QUERYPROP"></A>
+      <B>Input query properties </B> 
+      
+      <P>
+	 <B>Certify</B> -- indicates that the server must return the response
+     message with the digital signature using the server's private key. If the
+     session is used, the server must return the response message with the MAC code
+     using a pre-established session key. 
+      </P>
+       
+      <P><P>On the <A HREF="sessionsetup.html">Session Setup</A> panel, if the 
+      &quot;Certified&quot; checkbox is checked, the query will be certified.
+      </P>
+
+      <P><P>
+	 <B>Certify Cache</B> -- will require all cached values returned be 
+         signed by the originating server. 
+      </P>
+      
+      <P><P>
+	 <B>Authoritative</B> -- do not use cache, always retrieve from responsible
+         server. 
+      </P>	
+      
+      <P><P>
+	 <B>Ignore Restricted Values</B> -- Unauthenticated users check
+          this to ignore non-public read handle values. Authenticated users
+          could check this off to get non-public read handle values.
+      </P>
+  <P>	
+  <LI><A NAME="DISPLAYVALUE"></A>
+      <B>Display handle values</B>
+      <P>
+      The 'Handle Data' box displays the handle data values being queried.
+      Highlight handle values from this list to display their content.
+      </P>
+  <P> 
+  <LI><A NAME="SUBMITQUERY"></A>
+      <B>Submit the query</B>
+      <P>
+       Press the 'Submit' button to process the query.  A 'Resolving 
+       handle' window with a 'Cancel' button will pop up during processing. 
+       You could interrupt the query with the 'Cancel' button. 
+       An error message will pop up if the query failed.        
+      </P>
+</OL>
+
+<BR>
+<A HREF="intro.html">Home</A>
+<BR><HR><BR>
+<i>hdladmin@cnri.reston.va.us</i>
+
+</BODY>
+</HTML>

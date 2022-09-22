@@ -1,0 +1,116 @@
+A. CNRI License Agreement for HDL® Client Library (ver. 9) – Java™ Version
+
+© Corporation for National Research Initiatives 2018
+
+1. This CNRI License Agreement ("License Agreement") is between
+Corporation for National Research Initiatives ("CNRI"), having an
+office at 1895 Preston White Drive, Reston, VA 20191-5434, and the
+Individual or Organization ("Licensee") that has installed or
+otherwise used the HDL® Client Library (ver. 9) – Java™ Version
+("Software") (collectively the "Parties"). Licensee shall be deemed to
+have entered into, signed and agreed to be bound by the terms and
+conditions of this License Agreement upon Licensee's accessing,
+installing or otherwise using the Software.
+
+2. CNRI hereby grants to Licensee a non-exclusive, fully paid-up,
+world-wide license to use, reproduce, distribute, perform and/or
+display publicly, and prepare derivative works based on the Software,
+and to authorize others to do so, in source or binary form, provided,
+however, that CNRI's copyright notice and this License Agreement are
+both retained in the LICENSE.txt file of the Software alone, or in any
+derivative version prepared by Licensee.
+
+3. CNRI is making the Software available to Licensee on an "AS IS"
+basis.  CNRI MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR
+IMPLIED. BY WAY OF EXAMPLE, BUT NOT LIMITATION, CNRI MAKES NO AND
+DISCLAIMS ANY REPRESENTATION OR WARRANTY OF FITNESS FOR ANY PARTICULAR
+PURPOSE, MERCHANTABILITY, OR THAT THE USE OF THE SOFTWARE WILL NOT
+INFRINGE ANY THIRD PARTY RIGHTS.
+
+4. CNRI SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF THE
+SOFTWARE FOR ANY INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS
+AS A RESULT OF USING, MODIFYING OR DISTRIBUTING THE SOFTWARE, OR ANY
+DERIVATIVE THEREOF, EVEN IF ADVISED OF THE POSSIBILITY THEREOF.
+
+5. The License Agreement will automatically terminate upon a material
+breach of its terms and conditions. Nothing in the License Agreement
+shall be deemed to create any relationship of agency, partnership, or
+joint venture between CNRI and Licensee. The License Agreement does
+not grant permission to use the mark CNRI in a trademark sense to
+endorse or promote products or services of Licensee, or any third
+party.
+
+6. The License Agreement shall be governed by United States Federal
+law, and, to the extent such Federal law does not apply, by the law of
+the Commonwealth of Virginia, excluding Virginia's conflict of law
+provisions, and the courts within such State shall be the only courts
+of competent jurisdiction.
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+B. Third-party Licenses
+
+1. Google GSON
+
+Copyright © 2008-2018 Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+========================================================================
+
+2. Apache Commons Codec
+
+Copyright © 2002-2017 The Apache Software Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+src/test/org/apache/commons/codec/language/DoubleMetaphoneTest.java
+contains test data from http://aspell.net/test/orig/batch0.tab.
+Copyright © 2002 Kevin Atkinson (kevina@gnu.org)
+
+The content of package org.apache.commons.codec.language.bm has been translated
+from the original php source code available at http://stevemorse.org/phoneticinfo.htm
+with permission from the original authors.
+Original source copyright:
+Copyright © 2008 Alexander Beider & Stephen P. Morse.
+
+==============================================================
+
+3. AtomicFile
+
+Copyright © 2009 The Android Open Source Project
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied.  See the License for the specific language governing
+permissions and limitations under the License.

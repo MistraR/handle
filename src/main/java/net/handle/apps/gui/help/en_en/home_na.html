@@ -1,0 +1,36 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+    <title>"Homing" a Prefix</title>
+  </head>
+
+  <body>
+    <h1>"Homing" a Prefix</h1>
+
+    "Homing" a prefix on a particular site
+    tells the server(s) that make up the site that they
+    are responsible for the given prefix.
+    This way, when a resolver comes along and asks
+    for a handle with that prefix, the server
+    can say <i>"here it is"</i> or <i>"it doesn't exist"</i> or even
+    <i>"Why are you asking me?  I don't have it."</i>
+    <p>
+    If you enter the prefix handle as well as the
+    address and port number of one of the primary servers
+    for the desired site, this tool will "home" the
+    given prefix to that site.  A message will be
+    sent to each server in the site indicating that that site
+    will now be responsible for the given prefix.
+    From then on that server will accept and handle requests
+    for the given prefix.
+
+    <br><br>
+    To "home" a prefix, select 'Server Admin' from the main 
+    Handle Administration Tool menu, then click 'Home Prefix'.
+    
+    <BR><BR><BR>
+    <A HREF="intro.html">Home</A>
+    <hr>
+    <i>hdladmin@cnri.reston.va.us</i>
+  </body>
+</html>

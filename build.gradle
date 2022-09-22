@@ -1,0 +1,761 @@
+apply from: 'cnri.gradle'
+apply plugin: 'java-library'
+
+group = 'net.handle'
+archivesBaseName = 'handle'
+version = '9.2.0'
+project.ext.omitRevision = true
+
+defaultTasks 'clean', 'serverDistTar'
+
+repositories {
+    if (!project.ext.properties.repoBaseUri) {
+        maven { url 'https://download.oracle.com/maven' }  // for JE
+    }
+}
+
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/integrationTest/java')
+        }
+    }
+}
+
+// Set resources directories to be main directory.
+// Gradle excludes *.java files in resource directories by default
+sourceSets.main.resources {
+    srcDirs = ['src/main/java']
+}
+sourceSets.test.resources {
+    srcDirs = ['src/test/java']
+}
+sourceSets.integrationTest.resources {
+    srcDirs = ['src/integrationTest/java']
+}
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+    jettyServerJars
+    jettyProxyJars
+    jeUpgradeJars
+    adminWar
+    cnriLibs
+    cnriLibsClient
+    cnriLibsProxy
+}
+
+configurations.jettyServerJars {
+    // we include a preferred copy of servlet api jar
+    exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet'
+}
+
+dependencies {
+    compile 'com.google.code.gson:gson:2.8.5'
+    compile 'net.cnri:cnriutil:2.0'
+    compile 'commons-codec:commons-codec:1.11'
+
+    // optional
+    compile 'org.python:jython:2.2.1'
+    compile 'org.bouncycastle:bcprov-jdk15on:1.59'
+    compile 'org.bouncycastle:bcpkix-jdk15on:1.59'
+
+    // server-only
+    compile 'javax.servlet:javax.servlet-api:3.0.1'
+    compile 'org.eclipse.jetty.aggregate:jetty-all:8.1.22.v20160922', { exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet' }
+    compile 'com.sleepycat:je:7.5.11'
+
+    // server-only optional
+    compile 'com.github.oshi:oshi-core:3.13.3'
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.hamcrest:hamcrest-core:1.3'
+    testCompile 'net.minidev:json-smart:2.3'
+    testCompile 'com.googlecode.json-simple:json-simple:1.1.1'
+    testCompile 'com.nimbusds:nimbus-jose-jwt:2.26.1'
+
+    jettyServerJars 'org.eclipse.jetty:jetty-annotations:8.1.22.v20160922', { exclude group: 'org.eclipse.jetty' }
+    jettyServerJars 'org.eclipse.jetty:jetty-jsp:8.1.22.v20160922', { exclude group: 'org.eclipse.jetty' }
+    jettyServerJars 'org.eclipse.jetty:jetty-plus:8.1.22.v20160922', { exclude group: 'org.eclipse.jetty' }
+
+    jettyProxyJars 'net.cnri:jetty-cors-filter:8.1.22'
+
+    jeUpgradeJars 'com.sleepycat:je:4.1.27'
+    jeUpgradeJars 'javax.transaction:jta:1.1'
+
+    adminWar 'net.handle:handle-admin-webapp:0.9.4-beta.20190725@war'
+}
+
+project.ext.populateConfigurationWithMavenArtifacts 'cnriLibs', { dep ->
+    dep.group.startsWith('net.cnri') || dep.group.startsWith('net.handle')
+}, true
+project.ext.populateConfigurationWithMavenArtifacts 'cnriLibsClient', { dep ->
+    dep.group.startsWith('net.cnri') && dep.name == 'cnriutil'
+}, true
+project.ext.populateConfigurationWithMavenArtifacts 'cnriLibsProxy', { dep ->
+    dep.group.startsWith('net.cnri')
+}, true
+
+task buildVersionInfo {
+    doLast {
+        String fullVersion
+        if (project.ext.properties.containsKey('omitRevision')) {
+            fullVersion = version
+        } else {
+            ByteArrayOutputStream hgIdOut = new ByteArrayOutputStream()
+            exec {
+                ignoreExitValue true
+                commandLine 'sh', '-c', 'PATH=/usr/local/bin:$PATH hg id -i'
+                standardOutput = hgIdOut
+            }
+            ByteArrayOutputStream hgDateOut = new ByteArrayOutputStream()
+            exec {
+                ignoreExitValue true
+                environment 'TZ', 'UTC'
+                // oddly, building on Windows seemed to need avoiding the double-quotes required by this command; hence the echo commands in bash
+                commandLine 'bash', '-c', "PATH=/usr/local/bin:\$PATH hg parents --template '{date(date|localdate,'`echo -e '\\x22'`%Y%m%d%H%M%S`echo -e '\\x22'`')}'"
+                standardOutput = hgDateOut
+            }
+            String hgDate = hgDateOut.toString().trim()
+            if (hgDate.isEmpty()) hgDate = '?'
+            String hgId = hgIdOut.toString().trim()
+            if (hgId.isEmpty()) hgId = '?'
+            fullVersion = [version, hgDate, hgId].join('.')
+        }
+        println 'Version ' + fullVersion
+        File versionFile = new File('src/main/java/net/handle/server/Version.java')
+        try {
+           versionFile.text = '' +
+                'package net.handle.server;\n' +
+                'public class Version {\n' +
+                '    public static final String version="' + fullVersion + '";\n' +
+                '}'
+        } catch (FileNotFoundException e) { }
+    }
+}
+compileJava.dependsOn buildVersionInfo
+
+task integrationTest(type: Test) {
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    outputs.upToDateWhen { false }
+}
+check.dependsOn integrationTest
+integrationTest.mustRunAfter test
+
+javadoc {
+    include 'net/handle/hdllib/**'
+    include 'net/handle/api/**'
+    include 'net/handle/security/**'
+    include 'net/handle/util/**'
+    include 'net/handle/apps/batch/**'
+    include 'net/handle/apps/simple/*InfoConverter*'
+}
+
+//// BEGIN jar/war targets
+String buildDir = compileJava.getDestinationDir()
+
+task admintool(type: Jar) {
+    baseName 'admintool'
+    dependsOn compileJava
+    from(buildDir) {
+        include 'net/cnri/guiutil/**'
+        include 'net/handle/apps/admintool/**'
+    }
+    from('src/main/java') {
+        include 'net/handle/apps/admintool/view/resources/**'
+    }
+    artifacts {
+        archives admintool
+    }
+}
+
+task oldadmintool(type: Jar) {
+    baseName 'oldadmintool'
+    dependsOn compileJava
+    from(buildDir) {
+        include 'net/handle/apps/gui/**'
+    }
+    from('src/main/java') {
+        include 'net/handle/apps/gui/hadmin/icons/**'
+        include 'net/handle/apps/gui/help/**'
+    }
+    artifacts {
+        archives oldadmintool
+    }
+}
+
+task distJar(type: Jar) {
+    baseName 'handle'
+    dependsOn compileJava
+    from(buildDir) {
+        exclude 'net/cnri/guiutil/**'
+        exclude 'net/handle/apps/admintool/**'
+        exclude 'net/handle/apps/gui/**'
+    }
+    from('src/main/java') {
+        include 'net/handle/apps/servlet_proxy/resources/**'
+        include 'net/handle/etc/**'
+    }
+    artifacts {
+        archives distJar
+    }
+}
+
+task clientSourcesJar(type: Jar, dependsOn: classes) {
+    baseName 'handle-client'
+    classifier = 'sources'
+    from sourceSets.main.allSource, {
+        exclude 'net/cnri/guiutil/**'
+        exclude 'net/handle/apps/admintool/**'
+        exclude 'net/handle/apps/gui/**'
+        exclude 'net/handle/jdb/**'
+        exclude 'net/handle/apps/servlet_proxy/**'
+        exclude 'net/handle/apps/db_tool/**'
+        exclude 'net/handle/apps/test/**'
+        exclude 'net/handle/server/**'
+        exclude 'net/handle/dnslib/**'
+        exclude 'net/handle/apps/tools/**'
+    }
+    from sourceSets.main.allSource, {
+        include 'net/handle/dnslib/**'
+        exclude 'net/handle/dnslib/Storage*'
+        exclude 'net/handle/dnslib/NameServer*'
+    }
+    from sourceSets.main.allSource, {
+        include 'net/handle/apps/tools/**'
+        exclude 'net/handle/apps/tools/*Storage*'
+        exclude 'net/handle/apps/tools/Recover*'
+        exclude 'net/handle/apps/tools/RunJython*'
+        exclude 'net/handle/apps/tools/Split*'
+        exclude 'net/handle/apps/tools/*JDB*'
+    }
+    artifacts {
+        archives clientSourcesJar
+    }
+}
+
+task clientDistJar(type: Jar) {
+    baseName 'handle-client'
+    dependsOn compileJava
+    from(buildDir) {
+        exclude 'net/cnri/guiutil/**'
+        exclude 'net/handle/apps/admintool/**'
+        exclude 'net/handle/apps/gui/**'
+        exclude 'net/handle/jdb/**'
+        exclude 'net/handle/apps/servlet_proxy/**'
+        exclude 'net/handle/apps/db_tool/**'
+        exclude 'net/handle/apps/test/**'
+        exclude 'net/handle/server/**'
+        exclude 'net/handle/dnslib/**'
+        exclude 'net/handle/apps/tools/**'
+    }
+    from(buildDir) {
+        include 'net/handle/dnslib/**'
+        exclude 'net/handle/dnslib/Storage*'
+        exclude 'net/handle/dnslib/NameServer*'
+    }
+    from(buildDir) {
+        include 'net/handle/apps/tools/**'
+        exclude 'net/handle/apps/tools/*Storage*'
+        exclude 'net/handle/apps/tools/Recover*'
+        exclude 'net/handle/apps/tools/RunJython*'
+        exclude 'net/handle/apps/tools/Split*'
+        exclude 'net/handle/apps/tools/*JDB*'
+    }
+    from('src/main/java') {
+        include 'net/handle/etc/**'
+    }
+    artifacts {
+        archives clientDistJar
+    }
+}
+
+task proxyJar(type: Jar) {
+    baseName 'hdlproxy'
+    classifier 'classes'
+    dependsOn compileJava
+    from(buildDir) {
+        include 'net/cnri/**'
+        exclude 'net/cnri/guiutil/**'
+        include 'net/handle/apps/servlet_proxy/**'
+        include 'net/handle/apps/simple/*InfoConverter*'
+        include 'net/handle/hdllib/**'
+        include 'net/handle/etc/**'
+        include 'net/handle/security/**'
+        include 'net/handle/util/**'
+        include 'net/handle/server/servletcontainer/servlets/**'
+        exclude 'net/handle/server/servletcontainer/servlets/SessionsServlet.class'
+        include 'net/handle/server/servletcontainer/auth/**'
+        exclude 'net/handle/server/servletcontainer/auth/StandardHandleAuthenticationFilter.class'
+        include 'net/handle/server/servletcontainer/support/**'
+        include 'net/handle/server/servletcontainer/HandleServerInterface.class'
+        include 'net/handle/server/servletcontainer/AutoSelfSignedKeyManager.class'
+        include 'net/handle/server/MonitorDaemon*'
+        include 'net/handle/server/SystemInfoWrapper*'
+        include 'net/handle/server/replication/NotifierInterface.class'
+    }
+    from('src/main/java') {
+        include 'net/handle/apps/servlet_proxy/resources/**'
+        include 'net/handle/etc/**'
+    }
+    artifacts {
+        archives proxyJar
+    }
+}
+
+task proxyWar(type: Jar) {
+    baseName 'hdlproxy'
+    dependsOn proxyJar
+    extension 'war'
+    from('src/main/java/net/handle/apps/servlet_proxy/resources') {
+    }
+    from(configurations.runtime) {
+        into 'WEB-INF/lib'
+        include 'commons-codec*.jar'
+        include 'gson*.jar'
+        include 'cnriutil*.jar'
+    }
+    from(configurations.jettyProxyJars) {
+        into 'WEB-INF/lib'
+    }
+    from('build/libs') {
+        into 'WEB-INF/lib'
+        include 'hdlproxy-' + version + '-classes.jar'
+    }
+    artifacts {
+        archives proxyWar
+    }
+}
+//// END jar/war targets
+
+//// BEGIN src zips
+task clientSrcDistExploded(type: Copy) {
+    mustRunAfter clean, buildVersionInfo
+    destinationDir project.distsDir
+    String folderPath = 'handle-client-' + version + '-src'
+    from('.') {
+        into folderPath
+        include 'build.gradle'
+        include 'cnri.gradle'
+        include 'settings.gradle'
+        include 'gradlew*'
+        include 'gradle/**'
+        include 'scripts/unix/client/**'
+        include 'scripts/windows/client/**'
+        include 'scripts/launchers/*client*'
+    }
+    from('doc') {
+        into folderPath + '/doc'
+        include 'hcj-LICENSE.txt'
+        include 'hcj-README.txt'
+    }
+    from('src/main/java') {
+        into(folderPath + '/src/main/java')
+        exclude 'net/handle/jdb/**'
+        exclude 'net/handle/apps/servlet_proxy/**'
+        exclude 'net/handle/apps/db_tool/**'
+        exclude 'net/handle/apps/test/**'
+        exclude 'net/handle/server/**'
+        exclude 'net/handle/dnslib/**'
+        exclude 'net/handle/apps/tools/**'
+    }
+    from('src/main/java') {
+        into(folderPath + '/src/main/java')
+        include 'net/handle/dnslib/**'
+        exclude 'net/handle/dnslib/Storage*'
+        exclude 'net/handle/dnslib/NameServer*'
+    }
+    from('src/main/java') {
+        into(folderPath + '/src/main/java')
+        include 'net/handle/apps/tools/**'
+        exclude 'net/handle/apps/tools/*Storage*'
+        exclude 'net/handle/apps/tools/Recover*'
+        exclude 'net/handle/apps/tools/RunJython*'
+        exclude 'net/handle/apps/tools/Split*'
+        exclude 'net/handle/apps/tools/*JDB*'
+    }
+    with project.ext.configurationToMavenRepository('cnriLibsClient', folderPath + '/cnri-libs')
+}
+
+task clientSrcDistZip(type: Zip) {
+    dependsOn clientSrcDistExploded
+    baseName 'handle-client'
+    classifier 'src'
+    String folderPath = 'handle-client-' + version + '-src'
+    from('build/distributions/' + folderPath) {
+        into folderPath
+    }
+}
+
+task proxySrcDistExploded(type: Copy) {
+    mustRunAfter clean, buildVersionInfo
+    destinationDir project.distsDir
+    String folderPath = 'hdlproxy-' + version + '-src'
+    from('.') {
+        into folderPath
+        include 'build.gradle'
+        include 'cnri.gradle'
+        include 'settings.gradle'
+        include 'gradlew*'
+        include 'gradle/**'
+    }
+    from('doc') {
+        into folderPath + '/doc'
+        include 'hps-LICENSE.txt'
+        include 'hps-README.txt'
+        include 'REST-API.txt'
+    }
+    from('src/main/java') {
+        into(folderPath + '/src/main/java')
+        include 'net/cnri/**'
+        exclude 'net/cnri/guiutil/**'
+        include 'net/handle/apps/servlet_proxy/**'
+        include 'net/handle/apps/simple/*InfoConverter*'
+        include 'net/handle/hdllib/**'
+        include 'net/handle/etc/**'
+        include 'net/handle/security/**'
+        include 'net/handle/util/**'
+        include 'net/handle/server/servletcontainer/servlets/**'
+        exclude 'net/handle/server/servletcontainer/servlets/SessionsServlet.java'
+        include 'net/handle/server/servletcontainer/auth/**'
+        exclude 'net/handle/server/servletcontainer/auth/StandardHandleAuthenticationFilter.java'
+        include 'net/handle/server/servletcontainer/support/**'
+        include 'net/handle/server/servletcontainer/HandleServerInterface.java'
+        include 'net/handle/server/servletcontainer/AutoSelfSignedKeyManager.java'
+        include 'net/handle/server/MonitorDaemon*'
+        include 'net/handle/server/SystemInfoWrapper*'
+        include 'net/handle/server/replication/NotifierInterface.java'
+    }
+    with project.ext.configurationToMavenRepository('cnriLibsProxy', folderPath + '/cnri-libs')
+}
+
+task proxySrcDistZip(type: Zip) {
+    dependsOn proxySrcDistExploded
+    baseName 'hdlproxy'
+    classifier 'src'
+    String folderPath = 'hdlproxy-' + version + '-src'
+    from('build/distributions/' + folderPath) {
+        into folderPath
+    }
+}
+
+task serverSrcDistExploded(type: Copy) {
+    mustRunAfter clean, buildVersionInfo
+    destinationDir project.distsDir
+    String folderPath = 'handle-' + version + '-src'
+    from('.') {
+        into folderPath
+        include 'build.gradle'
+        include 'cnri.gradle'
+        include 'settings.gradle'
+        include 'gradlew*'
+        include 'gradle/**'
+        include 'scripts/unix/**'
+        include 'scripts/windows/**'
+        include 'scripts/launchers/**'
+        include 'src/main/java/**'
+    }
+    from('doc') {
+        into folderPath + '/doc'
+        include 'LICENSE.txt'
+        include 'README.txt'
+        include 'hcj-LICENSE.txt'
+        include 'hcj-README.txt'
+        include 'hps-LICENSE.txt'
+        include 'hps-README.txt'
+        include 'REST-API.txt'
+        include 'Handle_Technical_Manual.pdf'
+        include 'HandleTool_UserManual.pdf'
+        include 'RELEASE_NOTES.pdf'
+        include 'RELEASE_NOTES.txt'
+        include 'jeUpgradeTool-README.txt'
+    }
+    with project.ext.configurationToMavenRepository('cnriLibs', folderPath + '/cnri-libs')
+}
+
+task serverSrcDistZip(type: Zip) {
+    dependsOn serverSrcDistExploded
+    baseName 'handle'
+    classifier 'src'
+    String folderPath = 'handle-' + version + '-src'
+    from('build/distributions/' + folderPath) {
+        into folderPath
+    }
+}
+//// END src zips
+
+//// BEGIN distribution targets
+task clientDistExploded(type: Copy) {
+    dependsOn clean, admintool, oldadmintool, clientDistJar, javadoc, clientSrcDistZip
+    String baseName = 'handle-client'
+    String folderPath = baseName + '-' + version
+    destinationDir project.distsDir
+    outputs.upToDateWhen { false }
+    // license and readme
+    from('doc') {
+        into folderPath
+        include 'hcj-LICENSE.txt'
+        rename 'hcj-LICENSE.txt', 'LICENSE.txt'
+        include 'hcj-README.txt'
+        rename 'hcj-README.txt', 'README.txt'
+    }
+    // runtime dependency jars
+    from(configurations.runtime) {
+        into folderPath + '/lib'
+        include 'commons-codec*.jar'
+        include 'gson*.jar'
+        include 'cnriutil*.jar'
+    }
+    // other tool jars
+    from('build/libs') {
+        into folderPath + '/lib'
+        include 'admintool-' + version + '.jar'
+        include 'handle-client-' + version + '.jar'
+        include 'oldadmintool-' + version + '.jar'
+    }
+    // src zip
+    from('build/distributions') {
+        into folderPath
+        include 'handle-client-' + version + '-src.zip'
+    }
+    // javadoc
+    from('build/docs/javadoc') {
+        into folderPath + '/doc/apidoc'
+    }
+    // *ix scripts
+    from('scripts/launchers/unix-client') {
+        into folderPath + '/bin'
+        rename { String fileName -> return 'hdl' }
+    }
+    from('scripts/unix/client') {
+        into folderPath + '/bin'
+    }
+    // windows scripts
+    from('scripts/launchers/windows-client.bat') {
+        into folderPath + '/bin'
+        rename { String fileName -> return 'hdl.bat' }
+    }
+    from('scripts/windows/client') {
+        into folderPath + '/bin'
+    }
+}
+
+task clientDistTar(type: Tar) {
+    dependsOn clientDistExploded
+    compression Compression.GZIP
+    extension 'tar.gz'
+    baseName 'handle-client'
+    classifier 'distribution'
+    String folderPath = baseName + '-' + version
+    destinationDir project.distsDir
+    outputs.upToDateWhen { false }
+    from('build/distributions/' + folderPath) {
+        into folderPath
+    }
+    artifacts {
+        archives clientDistTar
+    }
+}
+
+task proxyDistExploded(type: Copy) {
+    dependsOn clean, proxySrcDistZip, proxyWar
+    String baseName = 'hdlproxy'
+    String folderPath = baseName + '-' + version
+    destinationDir project.distsDir
+    outputs.upToDateWhen { false }
+    // license and readme
+    from('doc') {
+        into folderPath
+        include 'hps-LICENSE.txt'
+        rename 'hps-LICENSE.txt', 'LICENSE.txt'
+        include 'hps-README.txt'
+        rename 'hps-README.txt', 'README.txt'
+        include 'REST-API.txt'
+    }
+    // src zip
+    from('build/distributions') {
+        into folderPath
+        include 'hdlproxy-' + version + '-src.zip'
+    }
+    // proxy war
+    from('build/libs') {
+        into folderPath
+        include 'hdlproxy-' + version + '.war'
+    }
+}
+
+task proxyDistTar(type: Tar) {
+    dependsOn proxyDistExploded
+    compression Compression.GZIP
+    extension 'tar.gz'
+    baseName 'hdlproxy'
+    classifier 'distribution'
+    String folderPath = baseName + '-' + version
+    destinationDir project.distsDir
+    outputs.upToDateWhen { false }
+    from('build/distributions/' + folderPath) {
+        into folderPath
+    }
+    artifacts {
+        archives proxyDistTar
+    }
+}
+
+task serverDistExploded(type: Copy) {
+    description 'Main binary distribution'
+    dependsOn clean, admintool, oldadmintool, distJar, javadoc, serverSrcDistZip
+    String baseName = 'handle'
+    String folderPath = baseName + '-' + version
+    destinationDir project.distsDir
+    outputs.upToDateWhen { false }
+    // license and readme
+    from('doc') {
+        into folderPath
+        include 'LICENSE.txt'
+        include 'README.txt'
+        include 'RELEASE_NOTES.txt'
+    }
+    // docs
+    from('doc') {
+        into folderPath + '/doc'
+        include 'Handle_Technical_Manual.pdf'
+        include 'HandleTool_UserManual.pdf'
+        include 'RELEASE_NOTES.pdf'
+        include 'RELEASE_NOTES.txt'
+    }
+    // runtime dependency jars
+    from(configurations.runtime) {
+        into folderPath + '/lib'
+        exclude 'jetty-*.jar'
+    }
+    from(configurations.runtime) {
+        into folderPath + '/lib/jetty'
+        include 'jetty-*.jar'
+    }
+    from(configurations.jettyServerJars) {
+        into folderPath + '/lib/jetty'
+        exclude 'jetty-*.jar'
+    }
+    from(configurations.jeUpgradeJars) {
+        into folderPath + '/jeUpgradeTool'
+    }
+    from('doc') {
+        into folderPath + '/jeUpgradeTool'
+        include 'jeUpgradeTool-README.txt'
+    }
+    // other tool jars
+    from('build/libs') {
+        into folderPath + '/lib'
+        include 'handle-' + version + '.jar'
+        include 'admintool-' + version + '.jar'
+        include 'oldadmintool-' + version + '.jar'
+    }
+    // src zip
+    from('build/distributions') {
+        into folderPath
+        include 'handle-' + version + '-src.zip'
+    }
+    // javadoc
+    from('build/docs/javadoc') {
+        into folderPath + '/doc/apidoc'
+    }
+    // *ix scripts
+    from('scripts/launchers/unix-server') {
+        into folderPath + '/bin'
+        rename { String fileName -> return 'hdl' }
+    }
+    from('scripts/unix/client') {
+        into folderPath + '/bin'
+    }
+    from('scripts/unix/server') {
+        into folderPath + '/bin'
+    }
+    // windows scripts
+    from('scripts/launchers/windows-server.bat') {
+        into folderPath + '/bin'
+        rename { String fileName -> return 'hdl.bat' }
+    }
+    from('scripts/windows/client') {
+        into folderPath + '/bin'
+    }
+    from('scripts/windows/server') {
+        into folderPath + '/bin'
+    }
+    from(configurations.adminWar) {
+        into folderPath
+        rename 'handle-admin-webapp-.*.war', 'admin.war'
+    }
+}
+
+task serverDistTar(type: Tar) {
+    description 'Main binary distribution'
+    dependsOn serverDistExploded
+    compression Compression.GZIP
+    extension 'tar.gz'
+    baseName 'handle'
+    classifier 'distribution'
+    String folderPath = baseName + '-' + version
+    destinationDir project.distsDir
+    outputs.upToDateWhen { false }
+    from('build/distributions/' + folderPath) {
+        into folderPath
+    }
+    artifacts {
+        archives serverDistTar
+    }
+}
+
+//// END distribution targets
+
+uploadArchives {
+    repositories.mavenDeployer {
+        addFilter('handle') {artifact, file ->
+            artifact.name == 'handle'
+        }
+        addFilter('handle-client') {artifact, file ->
+            artifact.name == 'handle-client'
+        }
+        addFilter('hdlproxy') {artifact, file ->
+            artifact.name == 'hdlproxy'
+        }
+        pom('handle-client').whenConfigured { pom ->
+            pom.dependencies.removeAll { dep -> dep.scope == 'test' }
+            pom.dependencies.findAll { dep -> dep.groupId == 'org.python' }.each { dep -> dep.optional = true }
+            pom.dependencies.findAll { dep -> dep.groupId == 'org.bouncycastle' }.each { dep -> dep.optional = true }
+            pom.dependencies.removeAll { dep -> dep.groupId == 'javax.servlet' }
+            pom.dependencies.removeAll { dep -> dep.groupId == 'org.eclipse.jetty.aggregate' }
+            pom.dependencies.removeAll { dep -> dep.groupId == 'com.sleepycat' }
+            pom.dependencies.removeAll { dep -> dep.groupId == 'com.github.oshi' }
+        }
+        pom('hdlproxy').whenConfigured { pom ->
+            pom.dependencies.removeAll { dep -> dep.scope == 'test' }
+            pom.dependencies.removeAll { dep -> dep.groupId == 'org.python' }
+            pom.dependencies.removeAll { dep -> dep.groupId == 'org.bouncycastle' }
+            pom.dependencies.findAll { dep -> dep.groupId == 'javax.servlet' }.each { dep -> dep.scope = 'provided' }
+            pom.dependencies.removeAll { dep -> dep.groupId == 'org.eclipse.jetty.aggregate' }
+            pom.dependencies.removeAll { dep -> dep.groupId == 'com.sleepycat' }
+            pom.dependencies.findAll { dep -> dep.groupId == 'com.github.oshi' }.each { dep -> dep.optional = true }
+            pom.withXml {
+                def dependenciesNode = asNode().get('dependencies')[0]
+                rootProject.configurations.jettyProxyJars.allDependencies.each { dep ->
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', dep.group)
+                    dependencyNode.appendNode('artifactId', dep.name)
+                    dependencyNode.appendNode('version', dep.version)
+                }
+            }
+        }
+        pom('handle').whenConfigured { pom ->
+            pom.dependencies.findAll { dep -> dep.groupId == 'org.python' }.each { dep -> dep.optional = true }
+            pom.dependencies.findAll { dep -> dep.groupId == 'org.bouncycastle' }.each { dep -> dep.optional = true }
+            pom.dependencies.findAll { dep -> dep.groupId == 'javax.servlet' }.each { dep -> dep.optional = true }
+            pom.dependencies.findAll { dep -> dep.groupId == 'org.eclipse.jetty.aggregate' }.each { dep -> dep.optional = true }
+            pom.dependencies.findAll { dep -> dep.groupId == 'com.sleepycat' }.each { dep -> dep.optional = true }
+            pom.dependencies.findAll { dep -> dep.groupId == 'com.github.oshi' }.each { dep -> dep.optional = true }
+        }
+    }
+}

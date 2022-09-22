@@ -1,0 +1,137 @@
+CNRI has included an REST API in the distributed proxy servlet.
+This API allows programmatic access to handle resolution using HTTP.
+
+
+Example Request/Response
+
+A REST API request can be made by performing a standard HTTP GET of
+
+/api/handles/<handle>
+
+The API returns JSON.
+
+For example, http://<server>/api/handles/4263537/4000 yields the response
+
+{
+   "responseCode":1,
+   "handle":"4263537/4000",
+   "values":[
+      {
+         "index":100,
+         "type":"HS_ADMIN",
+         "data":{
+            "format":"admin",
+            "value":{
+               "handle":"0.NA/4263537",
+               "index":200,
+               "permissions":"011111111111"
+            }
+         },
+         "ttl":86400,
+         "timestamp":"2000-04-10T22:41:46Z"
+      },
+      {
+         "index":1,
+         "type":"URL",
+         "data":{
+             "format":"string",
+             "value":"http://www.handle.net/index.html"
+         },
+         "ttl":86400,
+         "timestamp":"2001-11-21T16:21:35Z"
+      },
+      {
+         "index":2,
+         "type":"EMAIL",
+         "data":{
+             "format":"string",
+             "value":"hdladmin@cnri.reston.va.us"
+         },
+         "ttl":86400,
+         "timestamp":"2000-04-10T22:41:46Z"
+      }
+   ]
+}
+
+
+
+Response Format
+
+The response is a JSON object which includes a "responseCode" (an
+integer referring to a Handle protocol response code), an echo of the
+"handle" resolved, and either a list of "values" or, in the case of an
+error, an optional "message" which is a string describing the error.
+
+Each value is a JSON object with generally 5 attributes:
+
+    "index" : an integer
+    "type" : a string
+    "data" : an object specifying how the bytes of the handle value data have been decoded into JSON, see below
+    "ttl" : the time-to-live in seconds of the value, an integer (or, in the rare case of an absolute expiration time, that expiration time as an ISO8601-formatted string)
+    "timestamp" : an ISO8601-formatted string
+
+Handle value data an object with properties "format", a string, and "value".
+
+    If "format"="string", "value" is a string, representing the data as a UTF-8 string.
+    If "format"="base64", "value" is a string, with a BASE64 encoding of the data.
+    If "format"="hex", "value" is a string, with a hex encoding of the data.
+    If "format"="admin", "value" is an object, representing an HS_ADMIN value, with properties "handle" (a string), "index" (an integer), and "permissions" (a string, representing the bitmask of permissions).
+    If "format"="vlist", "value" is an list of objects, representing an HS_VLIST value; each object in the list has properties "handle" (a string) and "index" (an integer).
+    If "format"="site", "value" is an object, representing an HS_SITE value. As the structure of this object is complicated and generally of limited technical interest it is currently omitted from this documentation.
+
+
+
+Response Codes
+
+    1 : Success. (HTTP 200 OK)
+    2 : Error. Something unexpected went wrong during handle resolution. (HTTP 500 Internal Server Error)
+    100 : Handle Not Found. (HTTP 404 Not Found)
+    200 : Values Not Found. The handle exists but has no values (or no values according to the types and indices specified). (HTTP 200 OK)
+
+
+
+Query Parameters
+
+This proxy server system REST API is CORS-compliant, however, JSONP
+callbacks are also supported using a "callback" query parameter.
+
+The "auth" query parameter instructs the proxy server to bypass its
+cache and query a primary handle server directly for the newest handle
+data.
+
+The "type" and "index" query parameters allow the resolution response
+to be restricted to specific types and indexes of interest. Multiple
+"type" and "index" parameters are allowed and values are returned
+which match any of the specified types or indexes. For example,
+
+http://<server>/api/handles/4263537/4000?type=URL&type=EMAIL&callback=processResponse
+
+yields the response
+
+processResponse({
+   "responseCode":1,
+   "handle":"4263537/4000",
+   "values":[
+      {
+         "index":1,
+         "type":"URL",
+         "data":{
+             "format":"string",
+             "value":"http://www.handle.net/index.html"
+         },
+         "ttl":86400,
+         "timestamp":"2001-11-21T16:21:35Z"
+      },
+      {
+         "index":2,
+         "type":"EMAIL",
+         "data":{
+             "format":"string",
+             "value":"hdladmin@cnri.reston.va.us"
+         },
+         "ttl":86400,
+         "timestamp":"2000-04-10T22:41:46Z"
+      }
+   ]
+});
+

@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+  <TITLE>Handle.net Administration tools Help--session setip</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Session Setup Help</H1>
+
+<p>
+Using a Session reduces the authentication processing time for performing a
+sequence of administrative operations. Sessions also enable encrypting
+transactions between the client and hosting server.
+</p><p>
+Authenticated users establish a session with a server by selecting the
+desired session mode from the &quot;Session Mode&quot; list and setting session
+attributes.  Each user explicitly sets session setup options via this panel.
+</p>
+
+<h3>To enable sessions:</h3>
+
+<OL>
+  <li><A NAME="CHOOSESESSION"></A><b>Choose a session mode</b><p>
+    
+    <b>NOTE:</b><em>Not all modes may be available.</em>
+
+    <ul><li>
+      Choosing a session mode of "disabled" will
+      turn off sessions.  The handle tool will use the standard method of
+      communication with the server.</li>
+
+      <li>Choosing a session mode of "Diffie-Hellman" will use a public key
+          pair supplied by the Handle Admin Tool.  This is the simplest mode
+          to configure.
+      </li>
+      
+      <li>Choosing a session mode of "client cipher" will use a public key
+          pair supplied by the client.  You must specify files for a public
+          and private key pair in order to use this mode.
+      </li>
+
+      <li>Choosing a session mode of "cipher reference"  will use a public key
+          stored in a handle.  You must specify the handle that contains this
+          public key, the index at which the key is stored, and a file that 
+          contains the corresponding private key in order to use this mode.
+      </li>
+        </P>
+
+
+    </li>
+    </ul>
+
+     <LI> <p><A NAME="OPTIONS"></A><b>Specify session options</b>
+            </p>
+      <P>These controls are for specifying session options.
+      </P>
+      <UL>
+        <LI><A NAME="ENCFLAG"></A><B>Encrypted</B>
+          - allows you to specify that all session messages from the server must
+          be encrypted using the session key. 
+        <LI><A NAME="CERTFLAG"></A><B>Certified</B>
+          - allows you to specify that all session messages from the server must
+          be certified with a (MAC code) using the session key. 
+      </UL>
+      <UL>
+        <LI><A NAME="TIMEOUT"></A><B>Max lifetime</B>
+          - allows you to specify a session time out in seconds. The default
+            sets a server session time out, usually 24 hours (86400 minutes).
+            Invalid characters are 0 and negative numbers. Very large numbers
+            will not validate, and the default time out (or previous setting)
+            will be used.  
+      </UL>
+      <p>&nbsp;
+  <LI><A NAME="OK"></A><b>'Ok' your session setup information</b>
+
+    <P>Click the 'Ok' button to save your session setup information. All the
+    parameters will be validated, and error messages will be displayed. Your new
+    parameters for the session will take effect when your next administrative
+    operation is executed.
+      </P> 	  
+
+  <LI><A NAME="CANCEL"></A><b>'Cancel' your session setup information</b>
+
+    <P>Click the 'Cancel' button to cancel the session setup changes.
+      </P> 	  
+
+
+</OL>
+
+<BR>
+<A HREF="intro.html">Home</A>
+<BR><HR><BR>
+<i>hdladmin@cnri.reston.va.us</i>
+</BODY>
+</HTML>
